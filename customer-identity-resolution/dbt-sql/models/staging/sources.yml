@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw seed data from 5 source systems
+    schema: raw
+    tables:
+      - name: crm_contacts
+        description: CRM contact records - ~1,800 rows with duplicates and variations
+      - name: crm_companies
+        description: CRM company records - ~100 unique companies
+      - name: billing_accounts
+        description: Billing system accounts - ~1,200 rows, some with reversed name format
+      - name: billing_invoices
+        description: Invoice records linked to billing accounts
+      - name: support_users
+        description: Support system users - messiest source, many missing fields
+      - name: support_tickets
+        description: Support tickets linked to users
+      - name: app_signups
+        description: Product app signups - ~1,300 users, some with different emails
+      - name: app_events
+        description: Product usage events linked to app users
+      - name: partner_leads
+        description: Partner-submitted leads - often missing names or emails
+      - name: partner_referrals
+        description: Partner referral records linked to leads
