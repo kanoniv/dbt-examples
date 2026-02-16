@@ -10,13 +10,13 @@ End-to-end examples comparing approaches to identity resolution with real-world 
 
 ## Customer Identity Resolution
 
-Resolve ~6,500 customer records across CRM, Billing, Support, App, and Partner systems. Three approaches compared side by side:
+Resolve 6,500 customer records across CRM, Billing, Support, App, and Partner systems. Three approaches compared side by side:
 
 | Approach | What | Lines of Code | Runtime |
 |----------|------|---------------|---------|
-| [dbt-sql/](./customer-identity-resolution/dbt-sql/) | 41 hand-written SQL models in dbt | ~2,800 | minutes |
-| [splink/](./customer-identity-resolution/splink/) | Splink + DuckDB (Python) | ~440 | ~2.6s |
-| [kanoniv/](./customer-identity-resolution/kanoniv/) | Declarative YAML spec + Rust engine | ~170 | ~0.4s |
+| [dbt-sql/](./customer-identity-resolution/dbt-sql/) | 5 hand-written SQL models in dbt | 350 | <1s (DuckDB) |
+| [splink/](./customer-identity-resolution/splink/) | Splink + DuckDB (Python) | 440 | 2.6s |
+| [kanoniv/](./customer-identity-resolution/kanoniv/) | Declarative YAML spec + Rust engine | 170 | 0.4s |
 
 All three use the same [shared dataset](./customer-identity-resolution/data/) of 10 CSV files.
 

@@ -1,58 +1,61 @@
-# Approach 1: Pure dbt + SQL
+# Identity Resolution in Pure SQL (dbt)
 
-Identity resolution built entirely in SQL using dbt models. This is how most data teams attempt the problem before reaching for specialized tooling.
+Hand-rolled identity resolution using dbt and DuckDB. No external libraries - just SQL.
+
+## Pipeline
+
+```
+crm_contacts ─┐
+billing_accounts ─┤
+support_users ─────┤─> spine ─> blocking ─> scoring ─> clusters ─> dim_customers
+app_signups ──────┤
+partner_leads ────┘
+```
+
+| Model | Purpose |
+|-------|---------|
+| `int_identity__spine` | Union 5 sources, normalize emails/phones/names/nicknames |
+| `int_identity__blocking` | Generate candidate pairs via email, phone, and name blocking keys |
+| `int_identity__scoring` | Jaro-Winkler similarity scoring with hand-tuned weights |
+| `int_identity__clusters` | Connected components via iterative label propagation (6 passes) |
+| `dim_customers` | Survivorship - pick best value per field by source priority |
+
+## Quick Start
+
+```bash
+# Option 1: dbt (requires dbt-duckdb)
+pip install dbt-duckdb
+dbt seed --profiles-dir .
+dbt run --profiles-dir .
+
+# Option 2: Standalone (just DuckDB, no dbt needed)
+pip install duckdb
+python calculate_metrics.py
+```
+
+## Results
+
+```
+Input Records:    6,539
+Golden Records:   3,583
+Merge Rate:       45%
+Compression:      1.8x
+```
+
+Note: hand-tuned SQL gets a lower merge rate than probabilistic approaches (Splink: 66%, Kanoniv: 63%). This is the fundamental limitation - fixed weights cannot adapt to field-value frequency the way Fellegi-Sunter does.
 
 ## How It Works
 
-The pipeline has 4 layers, each built as dbt models:
+**Normalization** (4 macros in `identity_macros.sql`):
+- Email: lowercase, strip plus-addressing, Gmail dot trick, googlemail alias
+- Phone: strip non-digits
+- Name: lowercase + trim
+- Nickname: 48 mappings (bob->robert, bill->william, etc.)
 
-1. **Staging** (12 models) - Clean raw CSVs into consistent column names and types
-2. **Normalization** (5 models) - Standardize emails, phones, names, companies, addresses
-3. **Cross-matching** (8 models) - Blocking keys, candidate pairs, pair scoring, transitive closure, golden records
-4. **Marts** (6 models) - Dimensional models for analytics: `dim_customers`, `fct_customer_activity`, `rpt_entity_360`
+**Blocking**: Five keys per record - email, phone, first+last name, email username+last name, last name+company. Only pairs sharing a key become candidates.
 
-```
-models/
-  staging/          12 models - raw to clean
-  intermediate/     25 models - normalize, deduplicate, match, resolve
-  marts/             6 models - analytics-ready tables
-```
+**Scoring**: Weighted sum of field comparisons. Email exact match = 5.0, email username match = 3.0, phone = 4.0, name/company = Jaro-Winkler similarity scaled by weight. Threshold = 4.0.
 
-## Running
+**Clustering**: Iterative label propagation (6 passes) finds connected components by propagating minimum cluster IDs across match edges.
 
-Requires dbt and a PostgreSQL (or Snowflake) warehouse with the seed data loaded.
-
-```bash
-cd dbt-sql/
-dbt seed --profiles-dir .     # Load CSVs into warehouse
-dbt run --profiles-dir .      # Run all 41 models
-```
-
-## What It Gets Right
-
-- **Familiar tooling** - SQL and dbt are tools every data team already knows. No new dependencies, no Python scripts, no Rust binaries. Everything runs in your existing warehouse.
-- **Full visibility** - Every intermediate step is a table you can query. Want to see why two records matched? Check `int_xmatch__pair_scores`. Want to audit transitive closure? Query `int_xmatch__entity_graph`. There are no black boxes.
-- **dbt ecosystem** - Tests, documentation, lineage graphs, incremental models, CI/CD - all the dbt tooling works out of the box. You can add `dbt-expectations` tests, track freshness, and slot this into your existing DAG.
-- **Warehouse-native** - Runs where your data already lives. No data movement, no extract-load-transform round trips. If you're on Snowflake, it scales with your warehouse size.
-
-## Challenges
-
-- **2,800 lines of SQL** - The matching logic alone (blocking, scoring, clustering) is ~1,500 lines across 8 intermediate models. Adding a new source means writing 5-6 new models (staging, normalization, dedup, attribute mapping).
-- **Hand-tuned weights** - Match scores use hardcoded weights (`email_match * 0.4 + name_match * 0.3 + ...`). There's no statistical learning - getting these right requires trial and error, and they silently degrade as data distributions change.
-- **Soundex-only fuzzy matching** - SQL doesn't have Jaro-Winkler built in. Soundex is the practical limit, which misses obvious matches like "Smith" vs "Smth" or "Katherine" vs "Catherine".
-- **Fragile transitive closure** - The 3-pass SQL approach (`int_xmatch__transitive_closure.sql`) converges for most cases but can miss chains longer than 3 hops. A true graph algorithm guarantees correctness; iterative SQL does not.
-- **Manual survivorship** - Golden record assembly is 120 lines of window functions with hardcoded source priority. Changing "prefer CRM for email but Billing for company" means rewriting SQL, not editing a config.
-- **No governance** - No built-in freshness checks, schema validation, PII tagging, or audit logging. You build all of that yourself or go without.
-- **Slow iteration** - Every change to matching logic requires a full `dbt run`. On large datasets, this means minutes to hours before you see results. No interactive feedback loop.
-
-## File Count
-
-| Layer | Models | Lines |
-|-------|--------|-------|
-| Staging | 12 | ~350 |
-| Normalization | 5 | ~500 |
-| Dedup | 5 | ~250 |
-| Cross-matching | 8 | ~850 |
-| Resolution | 7 | ~350 |
-| Marts | 6 | ~350 |
-| **Total** | **41 + 4 YAML** | **~2,800** |
+**Survivorship**: `first_value()` window functions with source priority ordering (CRM > Billing > App > Support > Partners, with field-level overrides for phone and company).

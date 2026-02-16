@@ -1,16 +1,16 @@
 # Approach 2: Splink + DuckDB
 
-Identity resolution using [Splink](https://github.com/moj-analytical-services/splink), the most popular open-source record linkage library (~5k GitHub stars), with DuckDB as the in-process SQL backend.
+Identity resolution using [Splink](https://github.com/moj-analytical-services/splink), the most popular open-source record linkage library (5k+ GitHub stars), with DuckDB as the in-process SQL backend.
 
 ## How It Works
 
 Everything runs in a single Python script (`resolve.py`):
 
-1. **Normalization** (~100 lines) - Clean names (nickname resolution: Bob=Robert), emails (plus-addressing, Gmail dots), phones (E.164), companies (strip suffixes)
-2. **Model definition** (~30 lines) - Declare Splink comparisons and blocking rules
-3. **Training** (~15 lines) - Two-phase Fellegi-Sunter: random sampling for u-probabilities, then EM for m-probabilities
-4. **Predict + Cluster** (~5 lines) - Score all candidate pairs, cluster via connected components
-5. **Golden records** (~30 lines) - Source-priority survivorship per field
+1. **Normalization** (100 lines) - Clean names (nickname resolution: Bob=Robert), emails (plus-addressing, Gmail dots), phones (E.164), companies (strip suffixes)
+2. **Model definition** (30 lines) - Declare Splink comparisons and blocking rules
+3. **Training** (15 lines) - Two-phase Fellegi-Sunter: random sampling for u-probabilities, then EM for m-probabilities
+4. **Predict + Cluster** (5 lines) - Score all candidate pairs, cluster via connected components
+5. **Golden records** (30 lines) - Source-priority survivorship per field
 
 ```bash
 pip install -r requirements.txt
@@ -43,7 +43,7 @@ Elapsed time:          2.6s
 ## Challenges
 
 - **Manual normalization** - You write all cleanup code yourself. The 100-line normalization section in `resolve.py` handles nicknames (70+ mappings), email plus-addressing, Gmail dot trick, domain aliases, E.164 phone formatting, company suffix stripping, and name parsing ("Last, First" format). This is tedious, error-prone, and must be maintained as new patterns appear.
-- **Manual survivorship** - You write golden record assembly yourself (~30 lines of Python groupby logic). Changing field-level strategies means editing code, not config.
+- **Manual survivorship** - You write golden record assembly yourself (30 lines of Python groupby logic). Changing field-level strategies means editing code, not config.
 - **Training is fragile** - EM parameter estimation requires careful blocking rule selection for each training pass. We tried 4 different training strategies before finding one that produces good results. The wrong approach gives silently bad m/u estimates and poor match quality with no warning.
 - **No governance** - No built-in freshness checks, schema validation, PII tagging, audit logging, or shadow-mode deploys. You build observability yourself or go without.
 - **Python-only** - Doesn't integrate into dbt DAGs natively. If your pipeline is dbt-based, Splink requires a separate orchestration step (Airflow, Dagster, etc.) to bridge the gap.

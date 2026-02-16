@@ -1,6 +1,6 @@
 # Approach 3: Kanoniv
 
-Identity resolution as code. A single YAML spec (~170 lines of config) replaces 41 SQL models or 440 lines of Python.
+Identity resolution as code. A single YAML spec (170 lines of config) replaces hand-written SQL models or 440 lines of Python.
 
 ## How It Works
 
@@ -62,7 +62,7 @@ Runtime:              <0.5s
 - **Declarative** - The entire identity resolution pipeline is a YAML file. Matching rules, normalizers, survivorship, governance - all reviewable in a pull request. No Python to maintain, no SQL to debug.
 - **Built-in normalizers** - Email (plus-addressing, Gmail dots), phone (E.164), name (Unicode NFC), nickname (Bob=Robert, 70+ mappings), domain, generic. Declared per field in the spec, not hand-coded.
 - **Fellegi-Sunter with EM** - Same statistical matching as Splink. u-probabilities estimated from random sampling (unbiased), m-probabilities learned via EM. Initial probabilities in the spec are starting hints, not final values.
-- **Fast** - Rust engine via PyO3. 6,500 records in <0.5s. The same workload takes ~2.6s in Splink (6.5x slower).
+- **Fast** - Rust engine via PyO3. 6,500 records in <0.5s. The same workload takes 2.6s in Splink (6.5x slower).
 - **Governance built in** - Freshness checks, schema validation, PII field tagging, audit logging, shadow-mode threshold protection. These aren't add-ons; they're spec fields.
 - **Validation before execution** - `validate(spec)` catches errors before you run anything. `plan(spec)` shows the full execution plan with stages, strategies, and risk flags.
 - **Spec diffing** - `diff(spec_v1, spec_v2)` shows exactly what changed between versions: rules, thresholds, sources, survivorship. Useful for CI gates and review workflows.

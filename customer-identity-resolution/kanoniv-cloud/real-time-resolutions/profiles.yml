@@ -1,0 +1,13 @@
+kanoniv_realtime:
+  target: prod
+  outputs:
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'DANXNDN-EW59580') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'KANONIV') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ACCOUNTADMIN
+      database: KANONIV_IDENTITY
+      warehouse: MY_LARGE_WH
+      schema: ANALYTICS
+      threads: 4

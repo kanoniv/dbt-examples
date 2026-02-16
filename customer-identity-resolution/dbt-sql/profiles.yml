@@ -1,5 +1,5 @@
 identity_resolution:
-  target: dev
+  target: local
   outputs:
     dev:
       type: snowflake
@@ -12,7 +12,6 @@ identity_resolution:
       schema: DEV
       threads: 4
 
-    # DuckDB alternative for local development (no Snowflake needed)
     local:
       type: duckdb
       path: "../data/identity_resolution.duckdb"

@@ -1,0 +1,5 @@
+packages:
+  - git: https://github.com/kanoniv/dbt-kanoniv.git
+    name: dbt_kanoniv
+    revision: b5450f5ddec29c33a320d746b9ce75a387f2a56a
+sha1_hash: 106711d45177767ba48ad9b9fca91c28dd2ab7b4

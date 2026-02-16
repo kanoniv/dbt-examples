@@ -1,6 +1,6 @@
 # Customer Identity Resolution: Three Approaches Compared
 
-Resolve ~6,500 customer records across 5 source systems (CRM, Billing, Support, App, Partner) into ~2,400 unified golden records.
+Resolve 6,500 customer records across 5 source systems (CRM, Billing, Support, App, Partner) into unified golden records.
 
 Same data. Same problem. Three different approaches.
 
@@ -13,15 +13,15 @@ Your customers exist in multiple systems, each with different IDs, name formats,
 | | [dbt-sql/](./dbt-sql/) | [splink/](./splink/) | [kanoniv/](./kanoniv/) |
 |---|---|---|---|
 | **What** | Pure SQL in dbt | Splink + DuckDB | Kanoniv engine |
-| **Files** | 41 SQL models + 4 YAML | 1 Python script | 1 YAML spec + notebook |
-| **Lines of code** | ~2,800 | ~440 | ~170 (spec only) |
+| **Files** | 5 SQL models + 1 macro file | 1 Python script | 1 YAML spec + notebook |
+| **Lines of code** | 350 | 440 | 170 (spec only) |
 | **Matching** | Hand-tuned weights | Fellegi-Sunter + EM | Fellegi-Sunter + EM |
-| **String matching** | Soundex | Jaro-Winkler (multi-threshold) | Jaro-Winkler |
-| **Normalization** | 6 SQL models (500 lines) | Python functions (100 lines) | Declarative (email, phone, nickname, name) |
-| **Transitive closure** | 3-pass SQL (fragile) | Graph algorithm | Graph algorithm |
-| **Survivorship** | Window functions (120 lines) | Python groupby (30 lines) | Declarative YAML (10 lines) |
-| **Infrastructure** | dbt + PostgreSQL | Python + DuckDB | Python (Rust engine via PyO3) |
-| **Adding a source** | 5-6 new SQL models | Edit load function | Add `sources:` entry |
+| **String matching** | Jaro-Winkler | Jaro-Winkler (multi-threshold) | Jaro-Winkler |
+| **Normalization** | 4 macros (email, phone, name, nickname) | Python functions (100 lines) | Declarative (email, phone, nickname, name) |
+| **Transitive closure** | Iterative label propagation (6 passes) | Graph algorithm | Graph algorithm |
+| **Survivorship** | Window functions (80 lines) | Python groupby (30 lines) | Declarative YAML (10 lines) |
+| **Infrastructure** | dbt + DuckDB | Python + DuckDB | Python (Rust engine via PyO3) |
+| **Adding a source** | Edit spine union + survivorship | Edit load function | Add `sources:` entry |
 
 ## Results
 
@@ -30,10 +30,10 @@ All three approaches solve the same problem on the same data:
 | Metric | dbt-sql | Splink | Kanoniv |
 |--------|---------|--------|---------|
 | Input records | 6,539 | 6,539 | 6,539 |
-| Golden records | ~2,500 | 2,233 | 2,443 |
-| Merge rate | ~62% | 65.9% | 62.6% |
-| Compression | ~2.6x | 2.9x | 2.7x |
-| Runtime | minutes (depends on DB) | ~2.6s | ~0.4s |
+| Golden records | 3,583 | 2,233 | 2,443 |
+| Merge rate | 45% | 65.9% | 62.6% |
+| Compression | 1.8x | 2.9x | 2.7x |
+| Runtime | <1s (DuckDB) | 2.6s | 0.4s |
 
 ## Shared Data
 

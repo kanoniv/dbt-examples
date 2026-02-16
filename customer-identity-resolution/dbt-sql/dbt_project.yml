@@ -1,26 +1,19 @@
-name: identity_resolution_before
+name: 'identity_resolution'
 version: '1.0.0'
 config-version: 2
 
 profile: 'identity_resolution'
 
 model-paths: ["models"]
-seed-paths: ["../data/seeds"]
-analysis-paths: ["analyses"]
+macro-paths: ["macros"]
+seed-paths: ["../data"]
 
 clean-targets:
   - "target"
   - "dbt_packages"
 
-seeds:
-  identity_resolution_before:
-    +schema: raw
-
 models:
-  identity_resolution_before:
-    staging:
-      +materialized: view
-      +schema: staging
+  identity_resolution:
     intermediate:
       +materialized: table
       +schema: intermediate

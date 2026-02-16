@@ -1,0 +1,7 @@
+dbt-env/
+logs/
+target/
+dbt_packages/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc

@@ -10,7 +10,7 @@
 #   6. Configures survivorship rules for golden record assembly
 #   7. Enables governance: probability logging + shadow-mode threshold protection
 #
-# Lines of YAML: ~170      Lines of SQL it replaces: ~1,400
+# Lines of YAML: 170      Lines of SQL it replaces: 1,400+
 #
 # Note: Name parsing (billing "Last, First" -> first/last, support display_name -> first/last)
 # happens in dbt staging models before entities reach the Kanoniv engine.
@@ -22,7 +22,7 @@ metadata:
   name: Customer Identity Resolution
   description: >-
     Cross-source customer resolution across CRM, Billing, Support, App,
-    and Partner systems (~2,000 true entities from ~6,500 records).
+    and Partner systems (2,000 true entities from 6,500 records).
   owner: data-engineering
   tags: [production, pii-source, identity]
 
@@ -189,7 +189,7 @@ decision:
         u_probability: 0.001          # Only 0.1% of random pairs share email
         normalizer: email
 
-      # Phone - strong identifier when present, but ~40% missing across sources.
+      # Phone - strong identifier when present, but 40% missing across sources.
       # Normalizer: strip formatting -> E.164 (+1XXXXXXXXXX).
       - name: phone
         comparator: exact
@@ -204,7 +204,7 @@ decision:
         comparator: jaro_winkler
         weight: 1.0
         m_probability: 0.85           # True matches usually share first name
-        u_probability: 0.05           # ~5% chance random pair shares first name
+        u_probability: 0.05           # 5% chance random pair shares first name
         normalizer: nickname
 
       # Last name - stronger than first name (more diverse).
@@ -213,7 +213,7 @@ decision:
         comparator: jaro_winkler
         weight: 1.0
         m_probability: 0.88           # True matches almost always share last name
-        u_probability: 0.02           # ~2% chance random pair shares last name
+        u_probability: 0.02           # 2% chance random pair shares last name
         normalizer: name
 
       # Company - moderate discriminator. Fuzzy handles "Acme Corp" vs "ACME".
